@@ -1,6 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
+  Modal,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -94,11 +96,23 @@ const shortcuts = [
 
 export default function App() {
   const [toggles, setToggles] = useState(initialToggles);
+  const [isSecurityCheckLoading, setIsSecurityCheckLoading] = useState(false);
+  const securityCheckTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const enabledCount = useMemo(
     () => toggles.filter((setting) => setting.value).length,
     [toggles],
   );
+
+  useEffect(() => {
+    return () => {
+      if (securityCheckTimeoutRef.current) {
+        clearTimeout(securityCheckTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const updateToggle = (id: string, nextValue: boolean) => {
     setToggles((current) =>
@@ -106,6 +120,24 @@ export default function App() {
         setting.id === id ? { ...setting, value: nextValue } : setting,
       ),
     );
+  };
+
+  const stopSecurityCheck = () => {
+    if (securityCheckTimeoutRef.current) {
+      clearTimeout(securityCheckTimeoutRef.current);
+      securityCheckTimeoutRef.current = null;
+    }
+
+    setIsSecurityCheckLoading(false);
+  };
+
+  const runSecurityCheck = () => {
+    if (isSecurityCheckLoading) {
+      return;
+    }
+
+    setIsSecurityCheckLoading(true);
+    securityCheckTimeoutRef.current = setTimeout(stopSecurityCheck, 1800);
   };
 
   return (
@@ -219,12 +251,36 @@ export default function App() {
               Review your devices and recovery methods to keep the account in
               good standing.
             </Text>
-            <Pressable style={styles.securityButton}>
+            <Pressable
+              style={[
+                styles.securityButton,
+                isSecurityCheckLoading && styles.securityButtonDisabled,
+              ]}
+              disabled={isSecurityCheckLoading}
+              onPress={runSecurityCheck}
+            >
               <Text style={styles.securityButtonText}>Run security check</Text>
             </Pressable>
           </View>
         </View>
       </ScrollView>
+
+      <Modal
+        animationType="fade"
+        transparent
+        visible={isSecurityCheckLoading}
+        onRequestClose={stopSecurityCheck}
+      >
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingCard}>
+            <ActivityIndicator size="large" color="#7AE5B0" />
+            <Text style={styles.loadingTitle}>Running security check</Text>
+            <Text style={styles.loadingSubtitle}>
+              Reviewing devices, login activity, and recovery options.
+            </Text>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -431,9 +487,44 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: '#10233D',
   },
+  securityButtonDisabled: {
+    opacity: 0.75,
+  },
   securityButtonText: {
     color: '#F8FAFC',
     fontSize: 14,
     fontWeight: '700',
+  },
+  loadingOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(7, 17, 31, 0.58)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  loadingCard: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 28,
+    paddingHorizontal: 24,
+    paddingVertical: 28,
+    backgroundColor: '#10233D',
+    borderWidth: 1,
+    borderColor: '#29496E',
+    alignItems: 'center',
+  },
+  loadingTitle: {
+    marginTop: 18,
+    color: '#F6FAFF',
+    fontSize: 20,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  loadingSubtitle: {
+    marginTop: 10,
+    color: '#9DB2CD',
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
   },
 });
