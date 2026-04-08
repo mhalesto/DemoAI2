@@ -94,8 +94,23 @@ const shortcuts = [
   'Help center',
 ];
 
+const westernLanguages = [
+  'English',
+  'Spanish',
+  'French',
+  'German',
+  'Italian',
+  'Portuguese',
+  'Dutch',
+  'Swedish',
+  'Norwegian',
+  'Danish',
+];
+
 export default function App() {
   const [toggles, setToggles] = useState(initialToggles);
+  const [selectedLanguage, setSelectedLanguage] = useState('English');
+  const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [isSecurityCheckLoading, setIsSecurityCheckLoading] = useState(false);
   const securityCheckTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
@@ -221,24 +236,88 @@ export default function App() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account overview</Text>
           <View style={styles.panel}>
-            {linkSettings.map((setting, index) => (
-              <Pressable
-                key={setting.id}
-                style={[
-                  styles.row,
-                  index !== linkSettings.length - 1 && styles.rowBorder,
-                ]}
-              >
-                <View style={styles.rowText}>
-                  <Text style={styles.rowTitle}>{setting.label}</Text>
-                  <Text style={styles.rowSubtitle}>{setting.description}</Text>
-                </View>
-                <View style={styles.rowValueGroup}>
-                  <Text style={styles.rowValue}>{setting.value}</Text>
-                  <Text style={styles.chevron}>›</Text>
-                </View>
-              </Pressable>
-            ))}
+            {linkSettings.map((setting, index) => {
+              const isLastItem = index === linkSettings.length - 1;
+
+              if (setting.id === 'language') {
+                return (
+                  <View
+                    key={setting.id}
+                    style={!isLastItem && styles.rowBorder}
+                  >
+                    <Pressable
+                      style={styles.row}
+                      onPress={() =>
+                        setIsLanguageDropdownOpen((current) => !current)
+                      }
+                    >
+                      <View style={styles.rowText}>
+                        <Text style={styles.rowTitle}>{setting.label}</Text>
+                        <Text style={styles.rowSubtitle}>
+                          {setting.description}
+                        </Text>
+                      </View>
+                      <View style={styles.rowValueGroup}>
+                        <Text style={styles.rowValue}>{selectedLanguage}</Text>
+                        <Text style={styles.chevron}>
+                          {isLanguageDropdownOpen ? '^' : '#'}
+                        </Text>
+                      </View>
+                    </Pressable>
+
+                    {isLanguageDropdownOpen && (
+                      <View style={styles.languageDropdown}>
+                        {westernLanguages.map((language, languageIndex) => (
+                          <Pressable
+                            key={language}
+                            style={[
+                              styles.languageOption,
+                              languageIndex !== westernLanguages.length - 1 &&
+                                styles.languageOptionBorder,
+                            ]}
+                            onPress={() => {
+                              setSelectedLanguage(language);
+                              setIsLanguageDropdownOpen(false);
+                            }}
+                          >
+                            <Text
+                              style={[
+                                styles.languageOptionText,
+                                language === selectedLanguage &&
+                                  styles.languageOptionTextSelected,
+                              ]}
+                            >
+                              {language}
+                            </Text>
+                            {language === selectedLanguage && (
+                              <Text style={styles.languageOptionCurrent}>
+                                Current
+                              </Text>
+                            )}
+                          </Pressable>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                );
+              }
+
+              return (
+                <Pressable
+                  key={setting.id}
+                  style={[styles.row, !isLastItem && styles.rowBorder]}
+                >
+                  <View style={styles.rowText}>
+                    <Text style={styles.rowTitle}>{setting.label}</Text>
+                    <Text style={styles.rowSubtitle}>{setting.description}</Text>
+                  </View>
+                  <View style={styles.rowValueGroup}>
+                    <Text style={styles.rowValue}>{setting.value}</Text>
+                    <Text style={styles.chevron}>›</Text>
+                  </View>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
 
@@ -449,6 +528,38 @@ const styles = StyleSheet.create({
     color: '#D6E4F6',
     fontSize: 14,
     fontWeight: '600',
+  },
+  languageDropdown: {
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+    gap: 2,
+  },
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 16,
+    backgroundColor: '#10233D',
+  },
+  languageOptionBorder: {
+    marginBottom: 8,
+  },
+  languageOptionText: {
+    color: '#D6E4F6',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  languageOptionTextSelected: {
+    color: '#F6FAFF',
+  },
+  languageOptionCurrent: {
+    color: '#7AE5B0',
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
   },
   chevron: {
     color: '#7AE5B0',
